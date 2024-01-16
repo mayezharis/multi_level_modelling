@@ -6,6 +6,8 @@ library(foreign)?ggplot2
 
 ```{r importing data}
 hedon <- read.dta("course_files/hedon.dta")
+
+hed_hist <- hist(hedon$hed)
 ```
 
 
