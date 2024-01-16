@@ -1,5 +1,40 @@
 ```{r setup and imports echo = FALSE}
-
+library(tidyverse)
+library(foreign)?ggplot2
 
 ```
+
+```{r importing data}
+hedon <- read.dta("course_files/hedon.dta")
+```
+
+
+```{r first model}
+
+ols1 <- lm(hed ~ age, data = hedon)
+predscore <- predict(ols1)
+
+uniquedata <- cbind(age = hedon$age, predscore = predscore)
+uniquedata <- unique(uniquedata)
+
+hedon$agecen <- scale(hedon$age, scale = FALSE)
+
+estd <- rstandard(ols1)
+
+```
+
+```{r single categorical predictor}
+
+ols2 <- lm(hed ~ female, data = hedon)
+
+```
+
+
+```{r}
+
+ols4 <- lm(hed ~ country, data = hedon)
+ols5 <- lm(hed ~ country + age, data = hedon)
+
+```
+
 
