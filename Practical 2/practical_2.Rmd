@@ -1,6 +1,48 @@
 ```{r setup and imports echo = FALSE}
 library(tidyverse)
 library(foreign)
+library(lattice)
+library(lme4)
+```
 
+```{r importing data}
+hedon <- read.dta("course_files/hedon_intercept.dta")
+
+print(c(nrow(hedon), ncol(hedon)))
+sum(is.na(hedon))
+```
+
+```{r nullmodel}
+nullmodel <- lmer(hed ~ (1|country), data = na.omit(hedon), REML = FALSE)
+singlemodel <- lm(hed ~ 1, data = na.omit(hedon))
+
+LR <- -2 * (logLik(singlemodel) - logLik(nullmodel))
+
+anova(nullmodel, singlemodel)
+```
+```{r  country level effects}
+nullrand <- ranef(nullmodel)
+dotplot(nullrand)
+```
+
+```{r}
+meanage <- mean(hedon$age, na.rm = TRUE)
+
+hedon$agecen <- hedon$age - meanage
 
 ```
+
+```{r}
+ri1 <- lmer(hed ~ agecen + (1|country), data = na.omit(hedon), REML = FALSE)
+sl1 <- lm(hed ~ 1 +agecen, data = na.omit(hedon))
+
+print(anova(ri1, sl1))
+print(anova(ri1, nullmodel))
+```
+
+```{r}
+nullmodelx <- lmer(hed ~ (1|country), data = na.omit(hedon[,all.vars(formula(ri1))]), REML = FALSE)
+```
+
+
+

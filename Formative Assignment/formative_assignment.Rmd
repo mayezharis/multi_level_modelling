@@ -1,0 +1,82 @@
+```{r packages and setup}
+library(tidyverse)
+library(foreign)
+```
+
+
+First, we load the data and perform some basic analysis. 
+
+```{r load data and check missing values}
+ess_data <- read.dta("ESS.dta")
+iid_vars <- c("gender", "age", "eduyrs", "income")
+outcome_vars <- c("Hedonism", "Stimulation", "Achievement", "Universalism", "Conformity",
+                  "Tradition", "Benevolence", "SelfDirection", "Power", "Security")
+
+iid_vars_df <- ess_data %>%
+  select(-all_of(outcome_vars))
+outcome_vars_df <- ess_data %>%
+  select(-all_of(iid_vars))
+
+na_totals <- as.data.frame(colSums(is.na(ess_data))) %>%
+  rename("no_of_nas" = "colSums(is.na(ess_data))")
+
+na_totals_iid <- as.data.frame(colSums(is.na(iid_vars_df))) %>%
+  rename("no_of_nas" = "colSums(is.na(iid_vars_df))")
+
+na_totals_outcome <- as.data.frame(colSums(is.na(outcome_vars_df))) %>%
+  rename("no_of_nas" = "colSums(is.na(outcome_vars_df))")
+
+```
+
+
+Here, we count the number of missing values in each of the columns, separately for the possible outcome variables the independent/explanatory variables.
+
+Since `age` has the fewest missing values among the explanatory variables and since `Universalism` has the fewest missing values among the possible outcome variables, we choose these to perform linear regression with.
+
+
+```{r dataset with just the chosen variables}
+
+age_uni <- ess_data %>%
+  select(all_of(c("Country", "indiv", "gender", "age", "Universalism"))) %>%
+  filter(!is.na(age), !is.na(gender)) %>%
+  mutate(agecen = scale(age, scale = FALSE), 
+         female = ifelse(gender == "female", 1, 0),
+         agecen_sq = agecen^2)
+
+age_uni_summary <- summary(subset(age_uni, select = c(age, agecen, Universalism)))
+
+age_uni_plot <- age_uni %>%
+  ggplot(aes(x = agecen, y = Universalism)) +
+  geom_point(alpha = 0.5, color = "seagreen") +
+  geom_hline(yintercept = 0, linetype = 2, linewidth = 0.75) +
+  labs(title = "Universalism by Age",
+       x = "Age", 
+       y = "Universalism")
+
+age_uni_plot_sex <- age_uni %>%
+  ggplot(aes(x = age, y = Universalism, color = gender)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = 2, linewidth = 0.75, alpha = 0.75) +
+  labs(title = "Universalism by Age",
+       x = "Age", 
+       y = "Universalism")
+
+```
+
+```{r linear regression}
+
+fit1 <- lm(Universalism ~ agecen, data = age_uni)
+fit1_summary <- summary(fit1)
+plot(fit1)
+
+fit2 <- lm(Universalism ~ agecen + agecen:female, data = age_uni)
+fit2_summary <- summary(fit2)
+plot(fit2)
+
+fit3 <- lm(Universalism ~ agecen + agecen_sq, data = age_uni)
+fit3_summary <- summary(fit3)
+plot(fit3)
+
+```
+
+
