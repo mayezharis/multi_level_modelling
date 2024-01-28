@@ -46,20 +46,36 @@ age_uni <- ess_data %>%
 age_uni_summary <- summary(subset(age_uni, select = c(age, agecen, Universalism)))
 
 age_uni_plot <- age_uni %>%
-  ggplot(aes(x = agecen, y = Universalism)) +
-  geom_point(alpha = 0.5, color = "seagreen") +
+  ggplot(aes(x = age, y = Universalism)) +
+  geom_point(alpha = 0.5, color = "cornflowerblue") +
   geom_hline(yintercept = 0, linetype = 2, linewidth = 0.75) +
-  labs(title = "Universalism by Age",
-       x = "Age", 
-       y = "Universalism")
+  labs(x = "Age of Individual", 
+       y = "Universalism Score") +
+  theme(axis.text=element_text(size=17),
+        axis.title=element_text(size=17))
 
 age_uni_plot_sex <- age_uni %>%
   ggplot(aes(x = age, y = Universalism, color = gender)) +
   geom_point() +
   geom_hline(yintercept = 0, linetype = 2, linewidth = 0.75, alpha = 0.75) +
   labs(title = "Universalism by Age",
-       x = "Age", 
-       y = "Universalism")
+       x = "Age of Individual", 
+       y = "Universalism Score") +
+  theme(axis.text=element_text(size=20),
+        axis.title=element_text(size=20),
+        legend.title = element_text(size = 17),
+        legend.text = element_text(size = 17))
+
+sex_boxplot <-age_uni %>%
+  ggplot(aes(x = gender, y = Universalism, fill = gender)) +
+  geom_boxplot() + 
+  labs(x = "Sex of Individual",
+       y = "Universalism Score") +
+  theme(axis.text=element_text(size=17),
+        axis.title=element_text(size=17),
+        legend.title = element_text(size = 17),
+        legend.text = element_text(size = 17)) +
+  guides(color = guide_legend(override.aes = list(size = 20)))
 
 ```
 
@@ -77,6 +93,20 @@ fit3 <- lm(Universalism ~ agecen + agecen_sq, data = age_uni)
 fit3_summary <- summary(fit3)
 plot(fit3)
 
+age_uni_fit_plot <- age_uni %>%
+  ggplot(aes(x = agecen, y = Universalism)) +
+  geom_point(alpha = 0.5, color = "cornflowerblue") +
+  geom_hline(yintercept = 0, linetype = 2, linewidth = 0.75) +
+  labs(title = "Universalism by Age",
+       x = "(Centred) Age of Individual", 
+       y = "Universalism Score") +
+  stat_smooth(method = "lm", color = "red2")
+
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(fit1)
 ```
 
 
