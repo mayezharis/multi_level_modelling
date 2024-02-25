@@ -1,3 +1,47 @@
-```{r }
-
+```{r packages}
+library(tidyverse)
+library(lme4)
+library(Matrix)
+library(foreign)
+library(lattice)
 ```
+
+```{r data}
+ess_data <- read.dta("ESSprac2.dta")
+ess_clean <- na.omit(ess_data)
+```
+
+```{r Question 1}
+vcm_uni <-lmer(Universalism ~ (1|Country), data = ess_clean, REML=FALSE)
+vcm_vars <- as.data.frame(VarCorr(vcm_uni)) %>% select(all_of(c("grp", "vcov", "sdcor")))
+vcm_country_var_pct <- vcm_vars[[2]][1]/sum(vcm_vars[[2]])
+
+vcm_plot_data <- as.data.frame(ranef(vcm_uni))
+
+vcm_dotplot <- vcm_plot_data %>% 
+  ggplot(aes(x=condval, y=grp, color=term)) +
+  geom_dotplot(binaxis="y", stackdir="center", stackratio=1.5,dotsize=0.5) +
+  geom_errorbar(aes(xmin=condval + (qnorm(0.025) * condsd), 
+                    xmax =condval + (qnorm(0.975) * condsd)),
+                width = 0.35, 
+                position = position_dodge(0.9)) +
+  labs(x = "Random effect coefficient on universalism",
+       y = "Country") +
+  theme(legend.position = "none",
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 15))
+```
+
+
+```{r Question 2 Data}
+ess_q2 <- ess_clean %>%
+  mutate(agecen = scale(age, scale = FALSE), 
+         female = ifelse(gender == "female", 1, 0)) 
+```
+
+```{r 2b}
+ri1 <- lmer(Universalism ~ agecen + female + eduyrs + (1|Country), data = ess_q2)
+summary(ri1)
+```
+
+
