@@ -1,0 +1,14 @@
+MLMSS Mid-term Tasks:
+
+- Need to write hypotheses before modelling for each of the 3 explanatory variables.
+
+- Tabulate the summary of the model and describe what the values in the table mean.
+  - Compare with the VCM model in Q1.
+  - Talk about statistical significance (define statistical significance).
+  - Compare results of the model with hypotheses from before modelling.
+  
+- Make dotplots for variance between countries, grouped by gender (check plotting guide for this).
+
+- Fit model with just age and universalism.
+  - Discuss meaning and significance of the covariances between random terms in the model.
+  - Show model diagnostics and discuss validity of this model.
