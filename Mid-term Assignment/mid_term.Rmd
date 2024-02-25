@@ -35,13 +35,54 @@ vcm_dotplot <- vcm_plot_data %>%
 
 ```{r Question 2 Data}
 ess_q2 <- ess_clean %>%
-  mutate(agecen = scale(age, scale = FALSE), 
-         female = ifelse(gender == "female", 1, 0)) 
+  mutate(agecen = scale(age, scale = FALSE),
+         eduyrs_cen = scale(eduyrs, scale = FALSE)) 
 ```
+
 
 ```{r 2b}
-ri1 <- lmer(Universalism ~ agecen + female + eduyrs + (1|Country), data = ess_q2)
+ri1 <- lmer(Universalism ~ agecen + gender + eduyrs_cen + (1+gender|Country), data = ess_q2)
 summary(ri1)
 ```
+```{r 3-var model dotplot}
+ri1_plot_data <- as.data.frame(ranef(ri1))
+ri1_dotplot <- ri1_plot_data %>% 
+  ggplot(aes(x=condval, y=grp, color = term)) +
+  geom_dotplot(binaxis="y", stackdir="center", stackratio=1.5,dotsize=0.5) +
+  geom_errorbar(aes(xmin=condval + (qnorm(0.025) * condsd), 
+                    xmax =condval + (qnorm(0.975) * condsd)),
+                width = 0.35, 
+                position = position_dodge(0.9)) +
+  labs(x = "Random effect coefficient on universalism",
+       y = "Country") +
+  theme(legend.position = "none",
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 17),
+        strip.text = element_text(size= 15)) +
+  facet_grid(.~term, 
+             labeller = labeller(term = c("(Intercept)" = "Intercept", 
+                                           "genderfemale" = "Gender (female)")))
+```
 
+
+```{r Final model}
+ri2 <- lmer(Universalism ~ agecen + (1|Country), data = ess_q2)
+summary(ri2)
+```
+
+```{r final model dotplot}
+ri2_plot_data <- as.data.frame(ranef(ri2))
+ri2_dotplot <- ri2_plot_data %>% 
+  ggplot(aes(x=condval, y=grp, color = term)) +
+  geom_dotplot(binaxis="y", stackdir="center", stackratio=1.5,dotsize=0.5) +
+  geom_errorbar(aes(xmin=condval + (qnorm(0.025) * condsd), 
+                    xmax =condval + (qnorm(0.975) * condsd)),
+                width = 0.35, 
+                position = position_dodge(0.9)) +
+  labs(x = "Random effect coefficient on universalism",
+       y = "Country") +
+  theme(legend.position = "none",
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 17))
+```
 
