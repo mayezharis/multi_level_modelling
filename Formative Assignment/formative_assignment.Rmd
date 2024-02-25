@@ -85,7 +85,7 @@ fit1 <- lm(Universalism ~ agecen, data = age_uni)
 fit1_summary <- summary(fit1)
 plot(fit1)
 
-fit2 <- lm(Universalism ~ agecen + agecen:female, data = age_uni)
+fit2 <- lm(Universalism ~ agecen:female, data = age_uni)
 fit2_summary <- summary(fit2)
 plot(fit2)
 
