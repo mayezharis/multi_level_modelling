@@ -8,7 +8,12 @@ library(lattice)
 
 ```{r data}
 ess_data <- read.dta("ESSprac2.dta")
-ess_clean <- na.omit(ess_data)
+relevant_cols <- c("Country", "indiv", "gender", "age", "eduyrs", "Universalism")
+ess_clean <- ess_data %>% 
+  select(all_of(relevant_cols)) %>%
+  na.omit()
+na_totals <- as.data.frame(colSums(is.na(ess_data))) %>%
+  rename("no_of_nas" = "colSums(is.na(ess_data))")
 ```
 
 ```{r Question 1}
@@ -41,12 +46,34 @@ ess_q2 <- ess_clean %>%
 
 
 ```{r 2b}
-ri1 <- lmer(Universalism ~ agecen + gender + eduyrs_cen + (1+gender|Country), data = ess_q2)
+ri1 <- lmer(Universalism ~ agecen + gender + eduyrs_cen + (1|Country), data = ess_q2)
 summary(ri1)
 ```
 ```{r 3-var model dotplot}
 ri1_plot_data <- as.data.frame(ranef(ri1))
 ri1_dotplot <- ri1_plot_data %>% 
+  ggplot(aes(x=condval, y=grp, color = term)) +
+  geom_dotplot(binaxis="y", stackdir="center", stackratio=1.5,dotsize=0.5) +
+  geom_errorbar(aes(xmin=condval + (qnorm(0.025) * condsd), 
+                    xmax =condval + (qnorm(0.975) * condsd)),
+                width = 0.35, 
+                position = position_dodge(0.9)) +
+  labs(x = "Random effect coefficient on universalism",
+       y = "Country") +
+  theme(legend.position = "none",
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 17))
+```
+
+
+```{r including gender into previous model}
+ri2 <- lmer(Universalism ~ agecen + gender + eduyrs_cen + (1+gender|Country), data = ess_q2)
+summary(ri2)
+```
+
+```{r plotting gender model}
+ri2_plot_data <- as.data.frame(ranef(ri2))
+ri2_dotplot <- ri2_plot_data %>% 
   ggplot(aes(x=condval, y=grp, color = term)) +
   geom_dotplot(binaxis="y", stackdir="center", stackratio=1.5,dotsize=0.5) +
   geom_errorbar(aes(xmin=condval + (qnorm(0.025) * condsd), 
@@ -65,14 +92,15 @@ ri1_dotplot <- ri1_plot_data %>%
 ```
 
 
+
 ```{r Final model}
-ri2 <- lmer(Universalism ~ agecen + (1|Country), data = ess_q2)
-summary(ri2)
+ri3 <- lmer(Universalism ~ agecen + gender + eduyrs_cen + (1+agecen|Country), data = ess_q2)
+summary(ri3)
 ```
 
 ```{r final model dotplot}
-ri2_plot_data <- as.data.frame(ranef(ri2))
-ri2_dotplot <- ri2_plot_data %>% 
+ri3_plot_data <- as.data.frame(ranef(ri3))
+ri3_dotplot <- ri3_plot_data %>% 
   ggplot(aes(x=condval, y=grp, color = term)) +
   geom_dotplot(binaxis="y", stackdir="center", stackratio=1.5,dotsize=0.5) +
   geom_errorbar(aes(xmin=condval + (qnorm(0.025) * condsd), 
@@ -84,5 +112,11 @@ ri2_dotplot <- ri2_plot_data %>%
   theme(legend.position = "none",
         axis.text = element_text(size = 12),
         axis.title = element_text(size = 17))
+```
+
+```{r}
+vcm_validation <- lmer(Universalism ~ (1|Country), data = ess_q2, REML=FALSE)
+
+anova(vcm_validation, ri1)
 ```
 
