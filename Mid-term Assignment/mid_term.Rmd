@@ -92,9 +92,16 @@ ri2_dotplot <- ri2_plot_data %>%
 ```
 
 
+```{r binning age}
+
+ess_final <- ess_q2 %>% mutate(age_binned = cut(age, breaks=c(min(age), 25, 35, 50, 65, max(age))))
+
+```
+
+
 
 ```{r Final model}
-ri3 <- lmer(Universalism ~ agecen + gender + eduyrs_cen + (1+agecen|Country), data = ess_q2)
+ri3 <- lmer(Universalism ~ age_binned + gender + eduyrs_cen + (1+age_binned|Country), data = ess_final)
 summary(ri3)
 ```
 
@@ -110,13 +117,24 @@ ri3_dotplot <- ri3_plot_data %>%
   labs(x = "Random effect coefficient on universalism",
        y = "Country") +
   theme(legend.position = "none",
-        axis.text = element_text(size = 12),
-        axis.title = element_text(size = 17))
+        axis.text = element_text(size = 17),
+        axis.title = element_text(size = 22),
+        strip.text = element_text(size = 20)) + 
+  facet_grid(.~term, 
+             labeller = labeller(term = c("(Intercept)" = "Intercept", 
+                                          "age_binned(25,35]" = "Ages 26-35",
+                                          "age_binned(35,50]" = "Ages 36-50",
+                                          "age_binned(50,65]" = "Ages 51-65",
+                                          "age_binned(65,102]" = "Ages 66 and over")))
 ```
 
 ```{r}
 vcm_validation <- lmer(Universalism ~ (1|Country), data = ess_q2, REML=FALSE)
 
 anova(vcm_validation, ri1)
+```
+```{r}
+ri1_validation <- lmer(Universalism ~ age_binned + gender + eduyrs_cen + (1|Country), data = ess_final)
+anova(ri1_validation, ri3)
 ```
 
