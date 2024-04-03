@@ -12,3 +12,22 @@ MLMSS Mid-term Tasks:
 - Fit model with just age and universalism.
   - Discuss meaning and significance of the covariances between random terms in the model.
   - Show model diagnostics and discuss validity of this model.
+
+
+
+
+
+Country
+indiv
+gender
+age
+eduyrs
+Universalism
+
+
+
+
+
+
+
+
