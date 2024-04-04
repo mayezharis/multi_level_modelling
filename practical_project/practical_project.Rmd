@@ -1,0 +1,40 @@
+```{r}
+library(tidyverse)
+library(lme4)
+library(Matrix)
+library(foreign)
+library(lattice)
+library(haven)
+```
+
+```{r data}
+og_data <- read_dta("ssls99ug13.dta")
+only_vals_data <- data.frame(zap_labels(og_data))
+
+label_table <- function(df1 = og_data, df2 = only_vals_data, col) {
+  data.frame(value = sort(unique(df1[[col]])), label = names(attr(df1[[col]], "labels")))
+}
+
+sexmf_label_table <- label_table(col = "sexmf")
+parsc_label_table <- label_table(col = "parsc")
+parleft_label_table <- data.frame(value = sort(unique(only_vals_data$parleft)), label = names(attr(og_data$parleft, "labels"))[2:5])
+hqual_label_table <- label_table(col = "hqual")
+
+```
+
+
+```{r data}
+# Function to encode values
+encode_qna <- function(x) {
+  ifelse(x == 1, "Agree", "Disagree")
+}
+encode_hqual <- function(x) {
+  ifelse(x %in% c(1, 2), "no_highers", "highers")
+}
+
+ssls_data <- only_vals_data %>%
+  mutate_at(vars(starts_with("q")), ~encode_qna(.)) %>%
+  mutate(hqual = encode_hqual(hqual))
+```
+
+
