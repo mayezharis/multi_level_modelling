@@ -24,7 +24,7 @@ hqual_label_table <- label_table(col = "hqual")
 
 
 ```{r data}
-# Function to encode values
+# Functions to encode values
 encode_qna <- function(x) {
   ifelse(x == 1, "Agree", "Disagree")
 }
@@ -32,9 +32,61 @@ encode_hqual <- function(x) {
   ifelse(x %in% c(1, 2), "no_highers", "highers")
 }
 
+encode_hqual_numeric <- function(x) {
+  ifelse(x == "no_highers", 1, 2)
+}
+
 ssls_data <- only_vals_data %>%
   mutate_at(vars(starts_with("q")), ~encode_qna(.)) %>%
-  mutate(hqual = encode_hqual(hqual))
+  mutate(hqual = encode_hqual(hqual)) %>%
+  mutate(hqual_numeric = encode_hqual_numeric(hqual))
+
+ssls_cols <- colnames(ssls_data)[3:length(colnames(ssls_data))]
+
+ssls_data[ssls_cols] <- lapply(ssls_data[ssls_cols], factor)
+
+
 ```
+
+```{r vcm for variation across schools}
+vcm_school <- lmer(hqual_numeric ~ (1|schoolid), data = ssls_data, REML=FALSE)
+vcm_school_vars <- as.data.frame(VarCorr(vcm_school)) %>% select(all_of(c("grp", "vcov", "sdcor")))
+vcm_school_var_pct <- vcm_school_vars[[2]][1]/sum(vcm_school_vars[[2]])
+
+vcm_school_plot_data <- as.data.frame(ranef(vcm_school))
+
+vcm_school_dotplot <- vcm_school_plot_data %>% 
+  ggplot(aes(x=condval, y=grp, color=term)) +
+  geom_dotplot(binaxis="y", stackdir="center", stackratio=1.5,dotsize=0.5) +
+  geom_errorbar(aes(xmin=condval + (qnorm(0.025) * condsd), 
+                    xmax =condval + (qnorm(0.975) * condsd)),
+                width = 0.35, 
+                position = position_dodge(0.9)) +
+  labs(x = "Random effect coefficient on hqual",
+       y = "School") +
+  theme(legend.position = "none",
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 15))
+
+```
+
+```{r}
+nullmodel <- glmer(hqual ~ 1 + (1|schoolid), data = ssls_data, family = binomial)
+singlemodel <- glm(hqual ~ 1, data = ssls_data, family=binomial)
+
+print(logLik(singlemodel))
+print(logLik(nullmodel))
+print(summary(nullmodel))
+```
+
+
+```{r}
+ri1 <- lmer(Universalism ~ agecen + gender + eduyrs_cen + (1|Country), data = ess_q2)
+summary(ri1)
+
+
+```
+
+
 
 
