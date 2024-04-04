@@ -1,0 +1,51 @@
+```{r}
+library(tidyverse)
+library(lme4)
+library(Matrix)
+library(foreign)
+library(lattice)
+library(haven)
+library(car)
+library(sjPlot)
+library(mlmRev)
+library(rstanarm)
+library(bayesplot)
+```
+
+```{r}
+og_data <- read_dta("eurobarometer1112.dta")
+only_vals_data <- data.frame(zap_labels(og_data))
+
+label_table <- function(df1 = og_data, df2 = only_vals_data, col) {
+  data.frame(value = sort(unique(df1[[col]])), label = names(attr(df1[[col]], "labels")))
+}
+```
+
+```{r}
+baro_data <- only_vals_data %>%
+  na.omit() %>%
+  mutate(trusteu_enc = ifelse(trusteu == 1, 1, 2)) %>%
+  
+
+baro_cols <- colnames(baro_data)[4:length(colnames(baro_data))]
+
+baro_data[baro_cols] <- lapply(baro_data[baro_cols], factor)
+```
+
+```{r}
+nullmodel <- glmer(trusteu_enc ~ (1|countryname), data = baro_data, family = binomial)
+
+summary(nullmodel)
+```
+
+```{r}
+test_mod <- glmer(trusteu_enc ~ (1|countryname) + gender + education + community + trustng + bills, data = baro_data, family = binomial)
+test1 <- glmer(trusteu_enc ~ (1 +gender|countryname) + gender + education + community + trustng + bills, data = baro_data, family = binomial, verbose = 1)
+summary(test1)
+baro_gender_model <- stan_glmer(trusteu_enc ~ (1 + gender|countryname), data = baro_data, family = binomial, seed = 123)
+```
+
+
+
+
+
