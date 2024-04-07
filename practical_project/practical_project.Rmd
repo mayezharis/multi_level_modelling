@@ -38,7 +38,7 @@ encode_hqual <- function(x) {
 }
 
 encode_hqual_numeric <- function(x) {
-  ifelse(x == "no_highers", 0, 1)
+  ifelse(x == "NoHighers", 1, 0)
 }
 
 encode_parsc <- function(x) {
@@ -50,10 +50,10 @@ encode_parsc <- function(x) {
 ssls_data <- only_vals_data %>%
   mutate_at(vars(starts_with("q")), ~encode_qna(.)) %>%
   mutate(hqual = encode_hqual(hqual)) %>%
-  mutate(hqual_numeric = encode_hqual_numeric(hqual), 
-         parsc_enc = encode_parsc(parsc))
+  mutate(parsc_enc = encode_parsc(parsc),
+         hqual_numeric = encode_hqual_numeric(hqual))
 
-ssls_cols <- colnames(ssls_data)[3:length(colnames(ssls_data))-1]
+ssls_cols <- colnames(ssls_data)[3:length(colnames(ssls_data))]
 
 ssls_data[ssls_cols] <- lapply(ssls_data[ssls_cols], factor)
 
@@ -157,6 +157,15 @@ print(Sys.time()-start_time)
 ```{r models for variance in explanatory variables}
 start_time <- Sys.time()
 ssls_parsc_model <- stan_glmer(hqual ~ sexmf + parleft + parsc_enc + (1 + parsc_enc|schoolid), 
+                               data = ssls_data, family = binomial, seed = 123, iter = 5000, warmup = 2500)
+print(Sys.time()-start_time)
+
+# summary(ssls_parsc_model)
+```
+
+```{r models for variance in explanatory variables (without parsc)}
+start_time <- Sys.time()
+ssls_parsc_model <- stan_glmer(hqual ~ sexmf + parleft + (1 + parsc_enc|schoolid), 
                                data = ssls_data, family = binomial, seed = 123, iter = 4000, warmup = 2000)
 print(Sys.time()-start_time)
 
@@ -207,6 +216,9 @@ multi_sex_dotplot <- multi_sex_plot_data %>%
 
 
 
+```{r}
+summary(ssls_data)
+```
 
 
 
