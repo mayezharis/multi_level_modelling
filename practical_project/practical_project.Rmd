@@ -53,7 +53,7 @@ ssls_data <- only_vals_data %>%
   mutate(parsc_enc = encode_parsc(parsc),
          hqual_numeric = encode_hqual_numeric(hqual))
 
-ssls_cols <- colnames(ssls_data)[3:length(colnames(ssls_data))]
+ssls_cols <- colnames(ssls_data)[3:length(colnames(ssls_data))-1]
 
 ssls_data[ssls_cols] <- lapply(ssls_data[ssls_cols], factor)
 
@@ -142,37 +142,6 @@ print(Sys.time()- start_time)
 
 summary(ssls_sex_model)
 ```
-
-
-```{r models for variance in explanatory variables}
-start_time <- Sys.time()
-ssls_parleft_model <- stan_glmer(hqual ~ sexmf + parleft + parsc_enc + (1 + parleft|schoolid), 
-                                 data = ssls_data, family = binomial, seed = 123, iter = 4000, warmup = 2000)
-print(Sys.time()-start_time)
-
-# summary(ssls_parleft_model)
-```
-
-
-```{r models for variance in explanatory variables}
-start_time <- Sys.time()
-ssls_parsc_model <- stan_glmer(hqual ~ sexmf + parleft + parsc_enc + (1 + parsc_enc|schoolid), 
-                               data = ssls_data, family = binomial, seed = 123, iter = 5000, warmup = 2500)
-print(Sys.time()-start_time)
-
-# summary(ssls_parsc_model)
-```
-
-```{r models for variance in explanatory variables (without parsc)}
-start_time <- Sys.time()
-ssls_parsc_model <- stan_glmer(hqual ~ sexmf + parleft + (1 + parsc_enc|schoolid), 
-                               data = ssls_data, family = binomial, seed = 123, iter = 4000, warmup = 2000)
-print(Sys.time()-start_time)
-
-# summary(ssls_parsc_model)
-```
-
-
 ```{r model to include q1}
 start_time <- Sys.time()
 q1_model <- glmer(hqual ~ sexmf + parsc_enc + q1a + q1d + q1f + q1g + q1j + q1k + (1|schoolid), 
@@ -191,6 +160,31 @@ print(Sys.time()-start_time)
 summary(q2_model) 
 ```
 
+
+```{r models for variance in explanatory variables}
+
+### THIS TAKES AGES TO RUN ###
+
+start_time <- Sys.time()
+ssls_parleft_model <- stan_glmer(hqual ~ sexmf + parleft + parsc_enc + (1 + parleft|schoolid), 
+                                 data = ssls_data, family = binomial, seed = 123, iter = 5000, warmup = 2500)
+print(Sys.time()-start_time)
+
+# summary(ssls_parleft_model)
+```
+
+
+```{r models for variance in explanatory variables}
+
+### THIS TAKES AGES TO RUN ###
+
+start_time <- Sys.time()
+ssls_parsc_model <- stan_glmer(hqual ~ sexmf + parleft + parsc_enc + (1 + parsc_enc|schoolid), 
+                               data = ssls_data, family = binomial, seed = 123, iter = 5000, warmup = 2500)
+print(Sys.time()-start_time)
+
+# summary(ssls_parsc_model)
+```
 
 
 ```{r plotting caterpillar sex}
