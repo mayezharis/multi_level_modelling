@@ -105,6 +105,17 @@ correlation_plot <- model.matrix(~ 0 + hqual + sexmf + parsc_enc + parleft, data
   cor(use = "pairwise.complete.obs") %>%
   ggcorrplot(show.diag = TRUE, type="full", lab = TRUE, lab_size = 3.5) +
   theme(axis.text = element_text(size = 20))
+
+
+correlation_plot_q1 <- model.matrix(~ q1a + q1b + q1c + q1d + q1e + q1f + q1g + q1h + q1i + q1j + q1k + q1l, data = ssls_data) %>%
+  cor(use = "pairwise.complete.obs") %>%
+  ggcorrplot(show.diag = TRUE, type="full", lab = TRUE, lab_size = 3.5) +
+  theme(axis.text = element_text(size = 20))
+
+correlation_plot_q2 <- model.matrix(~ q2a + q2b + q2c + q2d + q2e + q2f + q2g + q2h + q2i, data = ssls_data) %>%
+  cor(use = "pairwise.complete.obs") %>%
+  ggcorrplot(show.diag = TRUE, type="full", lab = TRUE, lab_size = 3.5) +
+  theme(axis.text = element_text(size = 20))
 ```
 
 
@@ -161,6 +172,8 @@ summary(q2_model)
 ```
 
 
+### READ FROM HERE
+
 ```{r models for variance in explanatory variables}
 
 ### THIS TAKES AGES TO RUN ###
@@ -211,8 +224,32 @@ multi_sex_dotplot <- multi_sex_plot_data %>%
 
 
 ```{r}
-summary(ssls_data)
+start_time <- Sys.time()
+ssls_parleft_model_1234 <- stan_glmer(hqual ~ sexmf + parleft + parsc_enc + (1 + parleft|schoolid), 
+                                 data = ssls_data, family = binomial, seed = 12345, iter = 5000, warmup = 2500)
+print(Sys.time()-start_time)
+
+start_time <- Sys.time()
+ssls_parsc_model_1234 <- stan_glmer(hqual ~ sexmf + parleft + parsc_enc + (1 + parsc_enc|schoolid), 
+                               data = ssls_data, family = binomial, seed = 12345, iter = 5000, warmup = 2500)
+print(Sys.time()-start_time)
+
 ```
 
+```{r stan model with seed 12345, 7000 iterations and 3500 warmup (parleft)}
+start_time <- Sys.time()
+ssls_parleft_model_12345 <- stan_glmer(hqual ~ sexmf + parleft + parsc_enc + (1 + parleft|schoolid), 
+                                 data = ssls_data, family = binomial, seed = 12345, iter = 7000, warmup = 3500)
+print(Sys.time()-start_time)
+```
+
+```{r stan model with seed 12345, 7000 iterations and 3500 warmup (parsc)}
+start_time <- Sys.time()
+ssls_parsc_model_12345 <- stan_glmer(hqual ~ sexmf + parleft + parsc_enc + (1 + parsc_enc|schoolid), 
+                               data = ssls_data, family = binomial, seed = 12345, iter = 7000, warmup = 3500)
+print(Sys.time()-start_time)
+
+
+```
 
 
