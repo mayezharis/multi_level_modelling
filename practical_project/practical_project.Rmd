@@ -51,11 +51,17 @@ encode_parleft <- function(x) {
          ifelse(x %in% c(2,3), "AtLeast1To16", "BothLessThan16"))
 }
 
+# ssls_data <- only_vals_data %>%
+#   mutate_at(vars(starts_with("q")), ~encode_qna(.)) %>%
+#   mutate(hqual = encode_hqual(hqual)) %>%
+#   mutate(parsc_enc = encode_parsc(parsc),
+#          parleft_enc = encode_parleft(parleft),
+#          hqual_numeric = encode_hqual_numeric(hqual))
+
 ssls_data <- only_vals_data %>%
   mutate_at(vars(starts_with("q")), ~encode_qna(.)) %>%
   mutate(hqual = encode_hqual(hqual)) %>%
   mutate(parsc_enc = encode_parsc(parsc),
-         parleft_enc = encode_parleft(parleft),
          hqual_numeric = encode_hqual_numeric(hqual))
 
 ssls_cols <- colnames(ssls_data)[3:length(colnames(ssls_data))-1]
@@ -124,7 +130,7 @@ correlation_plot_q2 <- model.matrix(~ q2a + q2b + q2c + q2d + q2e + q2f + q2g + 
 
 
 ```{r gmler with with multiple explanatory variables}
-ssls_multi_mod <- glmer(hqual ~ sexmf + parleft_enc + parsc_enc + (1|schoolid), data = ssls_data, family = binomial, 
+ssls_multi_mod <- glmer(hqual ~ sexmf + parleft + parsc_enc + (1|schoolid), data = ssls_data, family = binomial, 
                         control = glmerControl(optimizer = "Nelder_Mead", optCtrl=list(maxfun=2e5)))
 summary(ssls_multi_mod)
 
@@ -147,7 +153,7 @@ multi_mod_dotplot <- multi_mod_plot_data %>%
 
 ```{r models for variance in explanatory variables across countries}
 start_time <- Sys.time()
-ssls_sex_model <- glmer(hqual ~ parsc_enc + parleft_enc + (1 + sexmf|schoolid), data = ssls_data, family = binomial,
+ssls_sex_model <- glmer(hqual ~ parsc_enc + parleft + (1 + sexmf|schoolid), data = ssls_data, family = binomial,
                         control = glmerControl(optimizer = "Nelder_Mead", optCtrl=list(maxfun=2e5)))
 print(Sys.time()- start_time)
 
@@ -168,7 +174,7 @@ summary(q1_model)
 
 ```{r model to include q2}
 start_time <- Sys.time()
-q2_model <- glmer(hqual ~ sexmf + parsc_enc + q2a + q2d + q2e + q2g + q2i + (1|schoolid), 
+q2_model <- glmer(hqual ~ sexmf + parsc_enc + q2a + q2d + q2f + q2e + q2g + q2i + (1|schoolid), 
                   data = ssls_data, family = binomial, control = glmerControl(optimizer = "Nelder_Mead", optCtrl=list(maxfun=2e5)))
 print(Sys.time()-start_time)
 
