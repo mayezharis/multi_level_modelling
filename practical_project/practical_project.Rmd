@@ -13,7 +13,7 @@ library (bayesplot)
 library(ggcorrplot)
 ```
 
-```{r data}
+```{r importing data}
 og_data <- read_dta("ssls99ug13.dta")
 only_vals_data <- data.frame(zap_labels(og_data))
 
@@ -51,13 +51,6 @@ encode_parleft <- function(x) {
          ifelse(x %in% c(2,3), "AtLeast1To16", "BothLessThan16"))
 }
 
-# ssls_data <- only_vals_data %>%
-#   mutate_at(vars(starts_with("q")), ~encode_qna(.)) %>%
-#   mutate(hqual = encode_hqual(hqual)) %>%
-#   mutate(parsc_enc = encode_parsc(parsc),
-#          parleft_enc = encode_parleft(parleft),
-#          hqual_numeric = encode_hqual_numeric(hqual))
-
 ssls_data <- only_vals_data %>%
   mutate_at(vars(starts_with("q")), ~encode_qna(.)) %>%
   mutate(hqual = encode_hqual(hqual)) %>%
@@ -71,7 +64,7 @@ ssls_data[ssls_cols] <- lapply(ssls_data[ssls_cols], factor)
 hqual_vals_ratio <- table(ssls_data$hqual)
 ```
 
-```{r }
+```{r Null model (VCM1) and single-level model (SLM)}
 nullmodel <- glmer(hqual ~ (1|schoolid), data = ssls_data, family = binomial)
 nullmodel_vpc <- pi^2/3
 singlemodel <- glm(hqual ~ 1, data = ssls_data, family=binomial)
@@ -97,7 +90,7 @@ vcm_school_dotplot <- vcm_school_plot_data %>%
 ```
 
 
-```{r linear model code}
+```{r linear model code (VCM1)}
 calculate_vpc <- function(model) {
   var_components <- as.data.frame(VarCorr(model)) %>% select(all_of(c("grp", "vcov", "sdcor")))
   vpc <- var_components[[2]][1]/sum(var_components[[2]])
@@ -110,7 +103,7 @@ summary(lin_model)
 vpc_lin_model <- calculate_vpc(lin_model)
 ```
 
-```{r}
+```{r Correlation Plots}
 correlation_plot <- model.matrix(~ 0 + hqual + sexmf + parsc_enc + parleft, data = ssls_data) %>%
   cor(use = "pairwise.complete.obs") %>%
   ggcorrplot(show.diag = TRUE, type="full", lab = TRUE, lab_size = 3.5) +
@@ -126,10 +119,16 @@ correlation_plot_q2 <- model.matrix(~ q2a + q2b + q2c + q2d + q2e + q2f + q2g + 
   cor(use = "pairwise.complete.obs") %>%
   ggcorrplot(show.diag = TRUE, type="full", lab = TRUE, lab_size = 3.5) +
   theme(axis.text = element_text(size = 20))
+
+corr_full <- model.matrix(~ q1a + q1b + q1c + q1d + q1e + q1f + q1g + q1h + q1i + q1j + q1k + q1l +
+                            q2a + q2b + q2c + q2d + q2e + q2f + q2g + q2h + q2i, data = ssls_data) %>%
+  cor(use = "pairwise.complete.obs") %>%
+  ggcorrplot(show.diag = TRUE, type="full", lab = TRUE, lab_size = 3.5) +
+  theme(axis.text = element_text(size = 20))
 ```
 
 
-```{r gmler with with multiple explanatory variables}
+```{r gmler with with multiple explanatory variables (DVM)}
 ssls_multi_mod <- glmer(hqual ~ sexmf + parleft + parsc_enc + (1|schoolid), data = ssls_data, family = binomial, 
                         control = glmerControl(optimizer = "Nelder_Mead", optCtrl=list(maxfun=2e5)))
 summary(ssls_multi_mod)
@@ -151,7 +150,7 @@ multi_mod_dotplot <- multi_mod_plot_data %>%
 ```
 
 
-```{r models for variance in explanatory variables across countries}
+```{r random slope model with slopes for sex (RSM)}
 start_time <- Sys.time()
 ssls_sex_model <- glmer(hqual ~ parsc_enc + parleft + (1 + sexmf|schoolid), data = ssls_data, family = binomial,
                         control = glmerControl(optimizer = "Nelder_Mead", optCtrl=list(maxfun=2e5)))
@@ -161,8 +160,7 @@ summary(ssls_sex_model)
 ```
 
 
-
-```{r model to include q1}
+```{r model to include q1 (Q1M)}
 start_time <- Sys.time()
 q1_model <- glmer(hqual ~ sexmf + parsc_enc + q1a + q1d + q1f + q1g + q1j + q1k + (1|schoolid), 
                   data = ssls_data, family = binomial, control = glmerControl(optimizer = "Nelder_Mead", optCtrl=list(maxfun=2e5)))
@@ -172,12 +170,43 @@ summary(q1_model)
 ```
 
 
-```{r model to include q2}
+```{r model to include q2 (Q2M)}
 start_time <- Sys.time()
 q2_model <- glmer(hqual ~ sexmf + parsc_enc + q2a + q2d + q2f + q2e + q2g + q2i + (1|schoolid), 
                   data = ssls_data, family = binomial, control = glmerControl(optimizer = "Nelder_Mead", optCtrl=list(maxfun=2e5)))
 print(Sys.time()-start_time)
 
 summary(q2_model) 
+```
+
+
+```{r liklihood-ratio test functions}
+lr_test <- function(model1, model2) {
+  log_likelihood_1 <- logLik(model1)[1]
+  log_likelihood_2 <- logLik(model2)[1]
+  df_1 <- attributes(logLik(model1))$df
+  df_2 <- attributes(logLik(model2))$df
+  
+  # Calculate test statistic
+  test_statistic <- -2 * (log_likelihood_1 - log_likelihood_2)
+  
+  # Calculate degrees of freedom
+  df <- df_2 - df_1
+  
+  # Look up critical value for significance level (e.g., 0.05) and df
+  critical_value <- qchisq(0.95, df, lower.tail = FALSE)
+  
+  # Compare test statistic with critical value
+  if (test_statistic > critical_value) {
+    print("The difference in fit between the models is statistically significant.")
+  } else {
+    print("The difference in fit between the models is not statistically significant.")
+  }
+}
+```
+
+```{r LR tests}
+lr_test(singlemodel, nullmodel)
+lr_test(ssls_multi_mod, ssls_sex_model)
 ```
 
